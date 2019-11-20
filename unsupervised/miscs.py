@@ -14,3 +14,5 @@ def split(all, omit):
 
     return valida, omits, training_mask
 
+def algorithm():
+    pass

@@ -4,10 +4,15 @@ import argparse
 import sys
 import numpy as np
 import pandas as pd
+import random
 
 from miscs import get_data, split
 from sklearn.cluster import KMeans
 from sklearn.metrics.pairwise import pairwise_distances_argmin
+from sklearn import preprocessing
+
+import matplotlib.pyplot as plt
+import matplotlib._color_data as mcd
 
 def main():
     # args
@@ -18,6 +23,9 @@ def main():
     parser.add_argument("-k", "--key", help="merge key for coupling if not provided using the first column")
     parser.add_argument("-s", "--suffix", help="output suffix for input files input.output.csv",
                         type=str, default=".output.csv")
+    # positional
+    parser.add_argument("--plot", help="plot the calculus", action="store_true")
+    parser.add_argument("-a","--algo", help="algorithm to perform the clustering default kmeans", default="kmeans")
     parser.add_argument("files", nargs="*")
 
     args = parser.parse_args()
@@ -86,6 +94,27 @@ def main():
     out.to_csv(outputfile, index=False)
     print("take a look to %s" % outputfile)
 
+    # plotting 2D
+    if args.plot:
+        from sklearn.decomposition import IncrementalPCA
+        ipca = IncrementalPCA(n_components=2, batch_size=10)
+        X_scale = preprocessing.scale(X)
+        X_pca = ipca.fit_transform(X_scale)
+        display_name = [ 'cluster%d' % i for i in range(len(centers)) ]
+        colors = [name for name in mcd.CSS4_COLORS]
+        random.shuffle(colors)
+        plt.figure()
+        for point, label in zip(X_pca,labels):
+            if label > len(colors):
+                print("cannot plot this huge cluster ... skipping label %", display_name[label])
+                continue
+            x, y = point
+            color = colors[label]
+            plt.scatter(x,y, color=color, lw=2, label=display_name[label])
+
+        # clusters
+
+        plt.show()
 
 if __name__ == '__main__':
     if not main():
